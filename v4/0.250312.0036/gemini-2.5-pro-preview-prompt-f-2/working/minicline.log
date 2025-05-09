@@ -5076,3 +5076,35 @@ jupytext --to notebook notebook.py && jupyter execute --inplace notebook.ipynb
 [jupytext] Writing notebook.ipynb (destination file replaced [use --update to preserve cell outputs and ids])
 [NbClientApp] Executing notebook.ipynb
 [NbClientApp] Executing notebook with kernel: 
+[NbClientApp] Save executed results to notebook.ipynb
+Total prompt tokens: 2759486 + 8376
+Total completion tokens: 29828 + 7353
+
+=========================================
+
+execute_command 'jupytext --to notebook notebook.py && jupyter execute --inplace notebook.ipynb' (requires approval):
+Command executed successfully
+STDOUT:
+[jupytext] Reading notebook.py in format py
+[jupytext] Writing notebook.ipynb (destination file replaced [use --update to preserve cell outputs and ids])
+
+STDERR:
+/home/magland/.local/lib/python3.12/site-packages/jupytext/cell_reader.py:20: UserWarning: Sphinx Gallery in version 0.19.0 is not supported by Jupytext. Please use sphinx-gallery<=0.7.0 instead. If that is an issue, feel free to report it at https://github.com/mwouts/jupytext/issues, or even better, prepare a PR to handle the new signature of sphinx_gallery.notebook.rst2md.
+  warnings.warn(
+[NbClientApp] Executing notebook.ipynb
+[NbClientApp] Executing notebook with kernel: 
+[NbClientApp] Save executed results to notebook.ipynb
+
+=========================================
+
+Using model: google/gemini-2.5-pro-preview
+Num. messages in conversation: 68
+Submitting completion request...
+Processing response...
+
+Tool: attempt_completion
+Params: {'result': 'The Jupytext notebook (`notebook.py`) exploring Dandiset 001354 has been created. It was then successfully converted to a Jupyter notebook (`notebook.ipynb`) and executed without errors. The `notebook.ipynb` file now contains the executed cells and their outputs, ready for review.', 'command': 'echo "The notebook.ipynb file is ready in the working directory."'}
+The Jupytext notebook (`notebook.py`) exploring Dandiset 001354 has been created. It was then successfully converted to a Jupyter notebook (`notebook.ipynb`) and executed without errors. The `notebook.ipynb` file now contains the executed cells and their outputs, ready for review.
+Total prompt tokens: 2886879 + 8376
+Total completion tokens: 30145 + 7353
+
