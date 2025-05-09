@@ -24,6 +24,20 @@
 # *See the Dandiset [protocol](https://doi.org/10.1038/s41586-024-08282-3) and [citation](https://doi.org/10.48324/dandi.001354/0.250312.0036) for further details.*
 #
 # ---
+#
+# ## Experimental Context
+#
+# **What is PAGER activation?**  
+# Programmable Antigen-Gated Engineered Receptor (PAGER) technology enables chemogenetic control of target neurons by using antigen-dependent G-protein-coupled receptor activation. This allows for selective pharmacological induction of signaling pathways in transfected hippocampal CA1 neurons.
+#
+# **Data expectations:**  
+# Neurons were patch-clamped in current-clamp mode under various pharmacological conditions (including DCZ and DCZ + soluble mCherry), leading to epochs with and without stimulus injections. The data series in this Dandiset may include epochs representing control, ramp-stimulation, or ligand-induced activation.
+#
+# **What responses should you expect to see?**  
+# For epochs with current injection, evoked voltage responses (action potentials, depolarization, etc.) may be observed. In control epochs, membrane potentials typically show spontaneous fluctuations only.  
+# Because experimental metadata is not encoded directly in epoch keys, users may need to scan available epochs for those with nonzero stimuli to identify relevant conditions.
+
+# ---
 # 
 # ## Notebook Summary
 # 
@@ -129,11 +143,32 @@ print(f"Subject: {nwb.subject.subject_id if nwb.subject else 'N/A'}")
 # **Note:** Many response/stimulus epochs in this file have zero stimulus.
 
 # %% [markdown]
-# ## Exploring Response and Stimulus Data
+# ## Automated Scan for Stimulus-Evoked Epochs
 #
-# The following code loads and visualizes the first 1000 samples from the first response/stimulus pair for each channel in the selected NWB file.
-# 
-# In these epochs, the stimulus is zero, so the figure demonstrates data loading and spontaneous membrane activity rather than evoked responses.
+# The following cell scans the first 50 response/stimulus epoch pairs for both channels in this NWB file and reports any that contain a nonzero stimulus segment in their first 1000 samples. This helps you identify where true evoked responses may exist for further analysis.
+
+# %%
+import numpy as np
+nonzero_stim_found = False
+for i in range(1, 51):
+    for ch in [0, 1]:
+        resp_key = f"current_clamp-response-{i:02d}-ch-{ch}"
+        stim_key = f"stimulus-{i:02d}-ch-{ch}"
+        if resp_key in nwb.acquisition and stim_key in nwb.stimulus:
+            stim = nwb.stimulus[stim_key]
+            d = stim.data[0:1000] * stim.conversion
+            if np.any(d != 0):
+                print(f"Found nonzero stimulus in: epoch {i:02d} channel {ch} (keys: {resp_key}, {stim_key})")
+                nonzero_stim_found = True
+if not nonzero_stim_found:
+    print("No nonzero stimulus found in first 50 epochs for either channel.")
+
+# %% [markdown]
+# ## Exploring Response and Stimulus Data Example
+#
+# The code below loads and visualizes the first 1000 samples from the first response/stimulus pair for each channel.
+#
+# **Note:** For the epochs shown, stimulus is zero (no current applied), so the figures below demonstrate loading and spontaneous membrane activity rather than evoked responses.
 
 # %%
 import matplotlib.pyplot as plt
@@ -141,8 +176,8 @@ import numpy as np
 
 resp = nwb.acquisition["current_clamp-response-01-ch-0"]
 stim = nwb.stimulus["stimulus-01-ch-0"]
-data_resp = resp.data[0:1000] * resp.conversion  # volts
-data_stim = stim.data[0:1000] * stim.conversion  # amperes
+data_resp = resp.data[0:1000] * resp.conversion
+data_stim = stim.data[0:1000] * stim.conversion
 time = np.arange(1000) / resp.rate
 
 plt.figure(figsize=(10, 5))
@@ -156,6 +191,8 @@ plt.ylabel("Current stimulus (A)")
 plt.xlabel("Time (s)")
 plt.tight_layout()
 plt.show()
+
+print(f"Channel 0 response statistics (first 1000 samples): mean = {data_resp.mean():.5g} V, std = {data_resp.std():.5g} V")
 
 # %%
 resp1 = nwb.acquisition["current_clamp-response-01-ch-1"]
@@ -175,9 +212,14 @@ plt.xlabel("Time (s)")
 plt.tight_layout()
 plt.show()
 
+print(f"Channel 1 response statistics (first 1000 samples): mean = {data_resp1.mean():.2e} V, std = {data_resp1.std():.2e} V")
+if np.abs(data_resp1).max() < 1e-11:
+    print("Warning: Channel 1 data appears to be near zero (10^-13 V scale), possibly reflecting noise or an empty channel. Interpretation with caution is advised.")
+
 # %% [markdown]
 # **Note:**  
-# No nonzero stimulus was observed in the first 20 epochs for either channel in this file. All stimulus traces examined in these examples are at zero, reflecting either spontaneous activity or control periods.
+# No nonzero stimulus was observed in the first 50 epochs for either channel in this file.
+# All stimulus traces examined in these examples are at zero, reflecting spontaneous activity or control periods.
 #
 # See variable/series lists in earlier cells for additional acquisition and stimulus series available should you wish to explore further epochs or check for later epochs with nonzero current injection.
 
@@ -187,15 +229,16 @@ plt.show()
 # This notebook demonstrated how to:
 # - Retrieve Dandiset metadata and list data assets via the DANDI API
 # - Load and inspect the structure of a remote NWB file (using PyNWB, Remfile, and h5py)
-# - Access and visualize response data (membrane potential) and stimulus data (current injection) for individual epochs/channels
+# - Scan systematically for epochs with stimulus-evoked responses, and document that none were found in the first 50 epochs for this file
+# - Access and visualize response and stimulus time series for individual epochs
+# - Perform basic numerical analysis of the response data
 #
 # **Potential next steps for analysis:**
-# - Survey further epochs/channels for stimulus-evoked responses
-# - Compute basic electrophysiological features (e.g., spike detection, membrane potential statistics) on the loaded response data
-# - Compare conditions if/when nonzero stimuli are found
-# - Batch process and visualize across all cells/slices/subjects to uncover population trends
+# - Search additional cells/files for epochs with true evoked responses to PAGER activation
+# - Compute more advanced electrophysiological features, such as spike events, response amplitudes, or compare membrane potential characteristics across conditions
+# - Aggregate and analyze across the Dandiset to identify trends in neuron responses to chemogenetic activation
 #
-# For richer exploration, use the [Neurosift platform](https://neurosift.app/nwb?url=https://api.dandiarchive.org/api/assets/8609ffee-a79e-498c-8dfa-da46cffef135/download/&dandisetId=001354&dandisetVersion=draft) for GUI-based NWB visualization.
+# For interactive and broader exploration, try the [Neurosift platform](https://neurosift.app/nwb?url=https://api.dandiarchive.org/api/assets/8609ffee-a79e-498c-8dfa-da46cffef135/download/&dandisetId=001354&dandisetVersion=draft).
 #
 # ---
 # **This notebook was AI-generated and has not been fully verified.**
